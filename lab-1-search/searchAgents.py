@@ -289,12 +289,20 @@ class CornersProblem(search.SearchProblem):
         # in initializing the problem
         "*** YOUR CODE HERE ***"
 
+        self.right = right                          # setting the right and top values
+        self.top = top
+
     def getStartState(self):
         """
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
         "*** YOUR CODE HERE ***"
+
+        startingPosition = self.startingPosition    # setting the starting position
+        corners = (False, False, False, False)      # setting the corners to false
+        return (startingPosition, corners)          # returning the starting position and corners
+
         util.raiseNotDefined()
 
     def isGoalState(self, state):
@@ -302,6 +310,11 @@ class CornersProblem(search.SearchProblem):
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
+        tempCorners = state[1]                      # pulling corner booleans from state
+        for corner in tempCorners:                  # checking if all corners have been visited
+            if not corner:
+                return False
+        return True
         util.raiseNotDefined()
 
     def getSuccessors(self, state):
@@ -325,7 +338,27 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
-
+            x, y = state[0]                                                     # pulling the current position from state
+            corners = state[1]                                                  # pulling the corner booleans from state
+            dx, dy = Actions.directionToVector(action)                          # getting the direction vector                    
+            nextx, nexty = int(x + dx), int(y + dy)                             # getting the next position
+            hitsWall = self.walls[nextx][nexty]                                 # checking if the next position hits a wall
+            newCorners = ()                                                     # creating a new tuple for the corners
+            nextState = (nextx, nexty)                                          # creating a new tuple for the next state
+            if not hitsWall:                                                    # if the next position does not hit a wall set new corners                  
+                if nextState == self.corners[0]:
+                    newCorners = (True, corners[1], corners[2], corners[3])
+                elif nextState == self.corners[1]:
+                    newCorners = (corners[0], True, corners[2], corners[3])
+                elif nextState == self.corners[2]:
+                    newCorners = (corners[0], corners[1], True, corners[3])
+                elif nextState == self.corners[3]:
+                    newCorners = (corners[0], corners[1], corners[2], True)
+                successor = ((nextState, newCorners), action, 1)
+            else:
+                successor = ((state[0], corners), action, 1)
+            successors.append(successor)                                        # adding the successor to the list
+             
         self._expanded += 1 # DO NOT CHANGE
         return successors
 
