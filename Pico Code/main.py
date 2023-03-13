@@ -1,6 +1,36 @@
 from machine import Pin, PWM
 import time
 
+class coilDriver(pin):
+    def __init__(self, pin):
+        self.pin = pin                  #pin number of the pwm drive
+        self.pwm = PWM(Pin(self.pin))   #initializing pwm on the pin
+        self.LUT = [32768,39160,45307,50972,55938,60013,63041,64905,65535,64905,63041,60013,55938,50972,45307,39160,32768,39160,45307,50972,55938,60013,63041,64905,65535,64905,63041,60013,55938,50972,45307,39160]
+        self.modifiedLUT = self.LUT     #LUT that will be modified by phase shift
+        self.pwm.freq(960)              #frequency of pwm drive
+        self.pwm.duty_u16(0)            #duty cycle of pwm drive
+        self.phase = 0                  #value of current phase shift from original signal in degrees
+        self.amplitude = 1              #multiplier for the amplitude of the wave (0-1)
+    
+    def changeDuty(self, duty):
+        self.pwm.duty_u16(int(duty))    #changes the duty cycle of the pwm drive
+    
+    def changePhase(self, phase):
+        self.phase = phase//(360*32)
+        shift = phase//(32)
+        self.modifiedLUT = self.LUT[shift:] + self.LUT[:shift]
+
+    def changeAmplitude(self, amplitude):
+        if amplitude > 1:
+            self.amplitude = 1
+        elif amplitude < 0:
+            self.amplitude = 0
+        else:
+            self.amplitude = amplitude
+        self.modifiedLUT = [int(x*self.amplitude) for x in self.LUT]    
+    
+
+
 def init():
     #initializing pwm on pin 16
     coil1pos = PWM(Pin(16))
@@ -62,7 +92,6 @@ def changeDuty(coil, duty, side):
         
 
 
-LUT = [32768,39160,45307,50972,55938,60013,63041,64905,65535,64905,63041,60013,55938,50972,45307,39160,32768,39160,45307,50972,55938,60013,63041,64905,65535,64905,63041,60013,55938,50972,45307,39160]
 while(1):
     init()
     count = 0
@@ -71,12 +100,24 @@ while(1):
     for x in LUT:
         if count > 16:
             changeDuty(1,0,1)
+            changeDuty(2,0,1)
+            changeDuty(3,0,1)
             time.sleep(0.0001)
             changeDuty(1,x,2)
+            if count > 8:
+                changeDuty(2,LUT[z],2)
+                z += 1
+            changeDuty(3,x,2)
         else:
             changeDuty(1,0,2)
+            changeDuty(2,0,2)
+            changeDuty(3,0,2)
             time.sleep(0.0001)
             changeDuty(1,x,1)
+            if count > 8:
+                changeDuty(2,LUT[y],1)
+                y += 1
+            changeDuty(3,x,1)
         time.sleep(0.002)
         count += 1
         
