@@ -57,3 +57,6 @@ c3 = b*z
 print(c1)
 print(c2)
 print(c3)
+
+n = 350
+
